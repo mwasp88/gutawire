@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webcam OCR</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        video { display: block; margin-bottom: 1em; }
+        pre { background: #f0f0f0; padding: 1em; }
+    </style>
+</head>
+<body>
+    <h1>Webcam OCR</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <pre id="text"></pre>
+    <script>
+    const video = document.getElementById('video');
+    const textElem = document.getElementById('text');
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        video.srcObject = stream;
+    }).catch(err => {
+        textElem.textContent = 'Camera access denied: ' + err;
+    });
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 640;
+    canvas.height = 480;
+
+    async function captureAndSend() {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+        const formData = new FormData();
+        formData.append('image', blob, 'frame.jpg');
+        try {
+            const resp = await fetch('/api/ocr', { method: 'POST', body: formData });
+            if (resp.ok) {
+                const data = await resp.json();
+                textElem.textContent = data.text;
+            } else {
+                textElem.textContent = 'Server error: ' + resp.status;
+            }
+        } catch (e) {
+            textElem.textContent = 'Error: ' + e;
+        }
+    }
+
+    setInterval(captureAndSend, 2000);
+    </script>
+</body>
+</html>
