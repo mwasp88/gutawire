@@ -1,44 +1,428 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI-Powered Parking System</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {font-family: 'Inter', 'Poppins', sans-serif;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Parking Management System</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tesseract.js for OCR -->
+    <script src='https://unpkg.com/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-input-button:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .mode-active { background-color: white; color: #4f46e5; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .status-wanted { color: #ef4444; font-weight: 700; }
+        .status-entering { color: #22c55e; }
+        .status-leaving { color: #f97316; }
+        .parking-full { color: #ef4444; font-weight: 700; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { border-top-color: #3498db; animation: spin 1s linear infinite; }
+    </style>
 </head>
-<body class="min-h-full bg-gray-50 text-gray-800">
-  <header class="text-center py-10 bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md">
-    <h1 class="text-4xl font-bold">AI Parking Management System</h1>
-    <p class="mt-2">Enhanced UI demo with Gemini placeholders</p>
-    <button id="toggle-theme" class="mt-4 px-4 py-2 border border-white rounded">Toggle Dark Mode</button>
-  </header>
+<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
 
-  <main class="max-w-4xl mx-auto p-6 space-y-6">
-    <section class="grid md:grid-cols-3 gap-4">
-      <img src="data:image/png;base64,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" alt="Gemini car 1" class="rounded-lg shadow">
-      <img src="data:image/png;base64,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" alt="Gemini car 2" class="rounded-lg shadow">
-      <img src="data:image/png;base64,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" alt="Gemini car 3" class="rounded-lg shadow">
-    </section>
+    <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-10">
 
-    <section class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-2xl font-semibold mb-4">System Placeholder</h2>
-      <p>This page demonstrates improved styling and fonts. The actual parking logic from the original code can be inserted here.</p>
-    </section>
-  </main>
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">AI Parking Management System</h1>
+            <p class="text-gray-600 mt-2">Scan plates to manage vehicle entry and exit.</p>
+        </div>
 
-  <script>
-    const toggle = document.getElementById('toggle-theme');
-    toggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      document.body.classList.toggle('bg-gray-900');
-      document.body.classList.toggle('text-gray-100');
-    });
-  </script>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Left Column: Input (Upload or Live) -->
+            <div class="flex flex-col">
+                <!-- Mode Toggle Buttons -->
+                <div class="flex border border-gray-300 rounded-lg p-1 mb-4 bg-gray-100">
+                    <button id="mode-upload-btn" class="w-1/3 p-2 text-sm rounded-md mode-active">File Upload</button>
+                    <button id="mode-live-btn" class="w-1/3 p-2 text-sm rounded-md text-gray-500">Live Camera</button>
+                    <button id="mode-capture-btn" class="w-1/3 p-2 text-sm rounded-md text-gray-500">Capture</button>
+                </div>
+
+                <!-- Upload View -->
+                <div id="upload-view" class="flex flex-col items-center justify-center bg-gray-100 rounded-xl p-6 border-2 border-dashed border-gray-300">
+                    <div class="w-full h-64 flex items-center justify-center mb-4">
+                        <img id="image-preview" src="https://placehold.co/600x400/e2e8f0/cbd5e0?text=Your+Image+Here" alt="Image Preview" class="max-w-full max-h-full rounded-lg object-contain">
+                    </div>
+                    <input type="file" id="image-upload" class="hidden" accept="image/*">
+                    <label for="image-upload" class="file-input-button cursor-pointer w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg text-center hover:bg-indigo-700">
+                        Choose Image
+                    </label>
+                </div>
+
+                <!-- Webcam View (for both Live and Capture) -->
+                <div id="webcam-view" class="hidden flex-col items-center justify-center bg-gray-900 rounded-xl p-6 border-2 border-dashed border-gray-700">
+                    <div class="w-full h-64 flex items-center justify-center mb-4 bg-black rounded-lg relative">
+                        <video id="webcam-feed" autoplay playsinline class="w-full max-h-full"></video>
+                        <div id="live-overlay" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-lg font-semibold hidden">
+                            Live scan active...
+                        </div>
+                    </div>
+                    <button id="live-scan-btn" class="hidden w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-lg text-center hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Start Live Scan
+                    </button>
+                     <button id="capture-btn" class="hidden w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg text-center hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Capture & Analyze
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Controls and Output -->
+            <div class="flex flex-col">
+                <!-- Action Button for Upload -->
+                <button id="upload-convert-btn" class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    Analyze Plate Image
+                </button>
+
+                <!-- Output Display -->
+                <div class="mt-4 flex-grow flex flex-col bg-gray-100 p-4 rounded-lg border border-gray-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-lg font-semibold text-gray-700">Plate Details:</label>
+                        <div class="text-right">
+                             <h3 class="text-sm font-medium text-gray-600">Cars in Parking</h3>
+                             <p id="parking-count" class="text-2xl font-bold text-indigo-600">0</p>
+                             <p id="parking-details" class="text-xs font-medium text-gray-500">Remaining Slots: 3</p>
+                        </div>
+                    </div>
+
+                    <div id="output-display" class="w-full flex-grow text-sm" style="white-space: pre-wrap;">Please wait...</div>
+                </div>
+
+                <!-- Copy Button -->
+                 <button id="copy-btn" class="mt-4 w-full bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-800 transition">
+                    Copy Details
+                </button>
+            </div>
+        </div>
+
+        <!-- Status/Message Box -->
+        <div id="message-box" class="mt-6 p-4 rounded-lg text-center text-white font-medium hidden"></div>
+
+    </div>
+
+    <script>
+        // --- DATABASE ---
+        const vehicleDatabase = {
+            "T898SBR": { owner: "SABRINA MAJALIWA", make: "Toyota", model: "RAV4", color: "Silver", status: "Registered" },
+            "T457EVZ": { owner: "INNOCENT HEBRON MWASIPOSYA", make: "Honda", model: "CR-V", color: "Black", status: "Registered" },
+            "T123IBU": { owner: "IBRAHIM HEBRON MWASIPOSYA", make: "Subaru", model: "Forester", color: "Blue", status: "WANTED" }
+        };
+
+        // --- PARKING STATE MANAGEMENT ---
+        const MAX_PARKING_CAPACITY = 3;
+        let carsInParking = new Set();
+
+        // DOM elements
+        const outputDisplay = document.getElementById('output-display');
+        const copyBtn = document.getElementById('copy-btn');
+        const messageBox = document.getElementById('message-box');
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const uploadConvertBtn = document.getElementById('upload-convert-btn');
+        const modeUploadBtn = document.getElementById('mode-upload-btn');
+        const modeLiveBtn = document.getElementById('mode-live-btn');
+        const modeCaptureBtn = document.getElementById('mode-capture-btn');
+        const uploadView = document.getElementById('upload-view');
+        const webcamView = document.getElementById('webcam-view');
+        const webcamFeed = document.getElementById('webcam-feed');
+        const liveScanBtn = document.getElementById('live-scan-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        const liveOverlay = document.getElementById('live-overlay');
+        const parkingCountDisplay = document.getElementById('parking-count');
+        const parkingDetailsDisplay = document.getElementById('parking-details');
+
+        let selectedImageFile = null;
+        let webcamStream = null;
+        let liveScanInterval = null;
+        let isOcrRunning = false;
+        let tesseractWorker = null;
+        let lastPlateData = null;
+
+        // --- CORE NPR & PARKING LOGIC ---
+        function getPlateParts(plateStr) { return plateStr.match(/[A-Z]+|[0-9]+/g) || []; }
+
+        function calculateSimilarity(s1, s2) {
+            let longer = s1, shorter = s2;
+            if (s1.length < s2.length) { longer = s2; shorter = s1; }
+            let longerLength = longer.length;
+            if (longerLength === 0) return 1.0;
+            const costs = Array(longer.length + 1).fill(0).map((_, i) => i);
+            for (let j = 1; j <= shorter.length; j++) {
+                let prev = costs[0];
+                costs[0] = j;
+                for (let i = 1; i <= longer.length; i++) {
+                    const temp = costs[i];
+                    costs[i] = longer[i - 1] === shorter[j - 1] ? prev : 1 + Math.min(prev, costs[i], costs[i - 1]);
+                    prev = temp;
+                }
+            }
+            return 1 - (costs[longer.length] / longerLength);
+        }
+
+        function findPlateInDB(ocrText) {
+            const normalizedOcr = (ocrText || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (normalizedOcr.length < 3) return null;
+            let bestMatch = null;
+            let highestScore = 0;
+            const SCORE_THRESHOLD = 0.8;
+            const ocrParts = getPlateParts(normalizedOcr);
+            if (ocrParts.length === 0) return null;
+            for (const dbPlate in vehicleDatabase) {
+                const dbPlateParts = getPlateParts(dbPlate);
+                let currentScore = ocrParts.reduce((acc, ocrPart) => {
+                    const partScore = dbPlateParts.reduce((max, dbPart) => {
+                        const sim = calculateSimilarity(ocrPart, dbPart);
+                        return sim > 0.75 ? Math.max(max, sim * dbPart.length) : max;
+                    }, 0);
+                    return acc + partScore;
+                }, 0);
+                if (currentScore > highestScore) {
+                    highestScore = currentScore;
+                    bestMatch = { plate: dbPlate, ...vehicleDatabase[dbPlate] };
+                }
+            }
+            return highestScore >= SCORE_THRESHOLD ? bestMatch : null;
+        }
+
+        function formatPlateDetails(plateData, parkingStatus) {
+            if (!plateData) return null;
+            let detailsHtml = `Plate Number: <strong>${plateData.plate}</strong>\n\nOwner:  <strong>${plateData.owner}</strong>\nMake:   <strong>${plateData.make}</strong>\nModel:  <strong>${plateData.model}</strong>\nColor:  <strong>${plateData.color}</strong>\n`;
+            if (parkingStatus === 'Entering') detailsHtml += `Status: <strong class="status-entering">ENTERING</strong>`;
+            else if (parkingStatus === 'Leaving') detailsHtml += `Status: <strong class="status-leaving">LEAVING</strong>`;
+            else if (parkingStatus === 'Cannot Enter') detailsHtml += `Status: <strong class="parking-full">PARKING FULL</strong>`;
+            return detailsHtml;
+        }
+
+        function updateParkingCount() {
+            const count = carsInParking.size;
+            parkingCountDisplay.textContent = count;
+            const remaining = MAX_PARKING_CAPACITY - count;
+            if (count >= MAX_PARKING_CAPACITY) {
+                parkingDetailsDisplay.textContent = 'Parking Full';
+                parkingDetailsDisplay.className = 'text-xs font-medium parking-full';
+            } else {
+                parkingDetailsDisplay.textContent = `Remaining Slots: ${remaining}`;
+                parkingDetailsDisplay.className = 'text-xs font-medium text-gray-500';
+            }
+        }
+
+        function processOcrResult(text) {
+            const plateData = findPlateInDB(text);
+            if (plateData) {
+                let parkingStatus;
+                if (carsInParking.has(plateData.plate)) {
+                    parkingStatus = 'Leaving';
+                    carsInParking.delete(plateData.plate);
+                } else {
+                    if (carsInParking.size >= MAX_PARKING_CAPACITY) {
+                        showMessage('Parking is full. Cannot enter.', 'error');
+                        outputDisplay.innerHTML = formatPlateDetails(plateData, "Cannot Enter");
+                        return;
+                    }
+                    parkingStatus = 'Entering';
+                    carsInParking.add(plateData.plate);
+                }
+                updateParkingCount();
+                lastPlateData = plateData;
+                outputDisplay.innerHTML = formatPlateDetails(plateData, parkingStatus);
+            }
+        }
+
+        function resetUIState() {
+            outputDisplay.innerHTML = 'Please wait...';
+            lastPlateData = null;
+            messageBox.classList.add('hidden');
+        }
+
+        function resetParkingState() {
+            carsInParking.clear();
+            updateParkingCount();
+            resetUIState();
+        }
+
+        async function analyzeImage(imageSource, buttonElement) {
+            if (!imageSource) { showMessage('No image source.', 'error'); return; }
+            buttonElement.disabled = true;
+            resetUIState();
+            outputDisplay.innerHTML = "Analyzing...";
+            try {
+                const worker = await Tesseract.createWorker('eng');
+                const { data: { text } } = await worker.recognize(imageSource);
+                processOcrResult(text);
+                if (!lastPlateData) outputDisplay.innerHTML = "Could not find a match in the database.";
+                showMessage('Analysis complete!', 'success');
+                await worker.terminate();
+            } catch (error) {
+                console.error('OCR Error:', error);
+                showMessage('An error occurred during analysis.', 'error');
+                outputDisplay.innerHTML = "Error during analysis.";
+            } finally {
+                buttonElement.disabled = false;
+            }
+        }
+
+        async function initializeWorker() {
+            if (!tesseractWorker) tesseractWorker = await Tesseract.createWorker('eng');
+        }
+
+        async function performLiveScan() {
+            if (isOcrRunning || !webcamStream) return;
+            isOcrRunning = true;
+            const canvas = document.createElement('canvas');
+            canvas.width = webcamFeed.videoWidth;
+            canvas.height = webcamFeed.videoHeight;
+            canvas.getContext('2d').drawImage(webcamFeed, 0, 0, canvas.width, canvas.height);
+            try {
+                await initializeWorker();
+                const { data: { text } } = await tesseractWorker.recognize(canvas);
+                processOcrResult(text);
+            } catch (e) { console.error("Live OCR error:", e); }
+            finally { isOcrRunning = false; }
+        }
+
+        async function startLiveScan() {
+            liveScanBtn.disabled = true;
+            liveScanBtn.textContent = 'Starting Engine...';
+            resetUIState();
+            await initializeWorker();
+            liveScanInterval = setInterval(performLiveScan, 2500);
+            liveScanBtn.textContent = 'Stop Live Scan';
+            liveScanBtn.classList.replace('bg-red-600', 'bg-yellow-500');
+            liveScanBtn.classList.replace('hover:bg-red-700', 'hover:bg-yellow-600');
+            liveOverlay.classList.remove('hidden');
+            liveScanBtn.disabled = false;
+        }
+
+        async function stopLiveScan() {
+            if (liveScanInterval) clearInterval(liveScanInterval);
+            liveScanInterval = null;
+            if (tesseractWorker) { await tesseractWorker.terminate(); tesseractWorker = null; }
+            liveScanBtn.textContent = 'Start Live Scan';
+            liveScanBtn.classList.replace('bg-yellow-500', 'bg-red-600');
+            liveScanBtn.classList.replace('hover:bg-yellow-600', 'hover:bg-red-700');
+            liveOverlay.classList.add('hidden');
+            isOcrRunning = false;
+        }
+
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = 'mt-6 p-4 rounded-lg text-center text-white font-medium';
+            const colors = { error: 'bg-red-500', success: 'bg-green-500', info: 'bg-blue-500' };
+            messageBox.classList.add(colors[type] || 'bg-blue-500');
+            messageBox.classList.remove('hidden');
+        }
+
+        async function startWebcam() {
+            try {
+                if (webcamStream) return;
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                webcamFeed.srcObject = webcamStream;
+            } catch (error) {
+                showMessage("Could not access webcam. Please grant permissions.", "error");
+                switchToUploadMode();
+            }
+        }
+
+        async function stopWebcam() {
+            await stopLiveScan();
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+        }
+        
+        async function switchToUploadMode() {
+            await stopWebcam();
+            uploadView.classList.remove('hidden');
+            webcamView.classList.add('hidden');
+            modeUploadBtn.classList.add('mode-active');
+            modeLiveBtn.classList.remove('mode-active');
+            modeCaptureBtn.classList.remove('mode-active');
+            uploadConvertBtn.classList.remove('hidden');
+            resetParkingState();
+        }
+        
+        async function switchToLiveMode() {
+            uploadView.classList.add('hidden');
+            webcamView.classList.remove('hidden');
+            captureBtn.classList.add('hidden');
+            liveScanBtn.classList.remove('hidden');
+            modeLiveBtn.classList.add('mode-active');
+            modeUploadBtn.classList.remove('mode-active');
+            modeCaptureBtn.classList.remove('mode-active');
+            uploadConvertBtn.classList.add('hidden');
+            resetParkingState();
+            await startWebcam();
+        }
+        
+        async function switchToCaptureMode() {
+            await stopLiveScan();
+            uploadView.classList.add('hidden');
+            webcamView.classList.remove('hidden');
+            liveScanBtn.classList.add('hidden');
+            captureBtn.classList.remove('hidden');
+            modeCaptureBtn.classList.add('mode-active');
+            modeUploadBtn.classList.remove('mode-active');
+            modeLiveBtn.classList.remove('mode-active');
+            uploadConvertBtn.classList.add('hidden');
+            resetParkingState();
+            await startWebcam();
+        }
+
+        modeUploadBtn.addEventListener('click', switchToUploadMode);
+        modeLiveBtn.addEventListener('click', switchToLiveMode);
+        modeCaptureBtn.addEventListener('click', switchToCaptureMode);
+
+        imageUpload.addEventListener('change', e => {
+            selectedImageFile = e.target.files[0];
+            if (!selectedImageFile) return;
+            const reader = new FileReader();
+            reader.onload = e => { imagePreview.src = e.target.result; };
+            reader.readAsDataURL(selectedImageFile);
+            uploadConvertBtn.disabled = false;
+            resetUIState();
+            outputDisplay.innerHTML = 'Image loaded. Ready to analyze.';
+        });
+
+        uploadConvertBtn.addEventListener('click', () => analyzeImage(selectedImageFile, uploadConvertBtn));
+        
+        captureBtn.addEventListener('click', () => {
+            if (!webcamStream) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = webcamFeed.videoWidth;
+            canvas.height = webcamFeed.videoHeight;
+            canvas.getContext('2d').drawImage(webcamFeed, 0, 0, canvas.width, canvas.height);
+            analyzeImage(canvas, captureBtn);
+        });
+
+        liveScanBtn.addEventListener('click', () => {
+            if (liveScanInterval) stopLiveScan(); else startLiveScan();
+        });
+
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = outputDisplay.innerText;
+            if (!textToCopy || textToCopy.startsWith('Please wait...')) {
+                showMessage('Nothing to copy!', 'error'); return;
+            }
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+                showMessage('Details copied to clipboard!', 'success');
+            } catch (err) { showMessage('Could not copy details.', 'error'); }
+            document.body.removeChild(tempTextArea);
+        });
+
+        // Initial setup
+        switchToUploadMode();
+    </script>
 </body>
 </html>
