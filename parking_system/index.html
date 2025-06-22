@@ -78,6 +78,7 @@
         </div>
 
         <div id="message-box" class="mt-6 p-4 rounded-lg text-center text-white font-medium hidden"></div>
+
     </div>
 
 <script>
@@ -107,6 +108,7 @@ const captureBtn = document.getElementById('capture-btn');
 const liveOverlay = document.getElementById('live-overlay');
 const parkingCountDisplay = document.getElementById('parking-count');
 const parkingDetailsDisplay = document.getElementById('parking-details');
+
 
 let selectedImageFile = null;
 let webcamStream = null;
@@ -160,9 +162,6 @@ function findPlateInDB(ocrText) {
     return highestScore >= SCORE_THRESHOLD ? bestMatch : null;
 }
 
-function formatPlateDetails(plateData, parkingStatus) {
-    if (!plateData) return null;
-    let detailsHtml = `Plate Number: <strong>${plateData.plate}</strong>\n\nOwner:  <strong>${plateData.owner}</strong>\nMake:   <strong>${plateData.make}</strong>\nModel:  <strong>${plateData.model}</strong>\nColor:  <strong>${plateData.color}</strong>\n`;
     if (parkingStatus === 'Entering') detailsHtml += `Status: <strong class="status-entering">ENTERING</strong>`;
     else if (parkingStatus === 'Leaving') detailsHtml += `Status: <strong class="status-leaving">LEAVING</strong>`;
     else if (parkingStatus === 'Cannot Enter') detailsHtml += `Status: <strong class="parking-full">PARKING FULL</strong>`;
@@ -182,8 +181,6 @@ function updateParkingCount() {
     }
 }
 
-function sendSerialData(plate, isEntering) {
-    fetch('/serial_event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -192,16 +189,7 @@ function sendSerialData(plate, isEntering) {
             slots: MAX_PARKING_CAPACITY,
             used: carsInParking.size
         })
-    }).catch(err => console.error('Serial send error:', err));
-}
 
-function processOcrResult(text) {
-    const plateData = findPlateInDB(text);
-    if (plateData) {
-        let parkingStatus;
-        if (carsInParking.has(plateData.plate)) {
-            parkingStatus = 'Leaving';
-            carsInParking.delete(plateData.plate);
         } else {
             if (carsInParking.size >= MAX_PARKING_CAPACITY) {
                 showMessage('Parking is full. Cannot enter.', 'error');
@@ -210,11 +198,7 @@ function processOcrResult(text) {
             }
             parkingStatus = 'Entering';
             carsInParking.add(plateData.plate);
-        }
-        updateParkingCount();
-        sendSerialData(plateData.plate, parkingStatus === 'Entering');
-        lastPlateData = plateData;
-        outputDisplay.innerHTML = formatPlateDetails(plateData, parkingStatus);
+
     }
 }
 
@@ -228,6 +212,7 @@ function resetParkingState() {
     carsInParking.clear();
     updateParkingCount();
     resetUIState();
+
 }
 
 async function analyzeImage(imageSource, buttonElement) {
@@ -238,7 +223,7 @@ async function analyzeImage(imageSource, buttonElement) {
     try {
         const worker = await Tesseract.createWorker('eng');
         const { data: { text } } = await worker.recognize(imageSource);
-        processOcrResult(text);
+
         if (!lastPlateData) outputDisplay.innerHTML = "Could not find a match in the database.";
         showMessage('Analysis complete!', 'success');
         await worker.terminate();
@@ -265,7 +250,7 @@ async function performLiveScan() {
     try {
         await initializeWorker();
         const { data: { text } } = await tesseractWorker.recognize(canvas);
-        processOcrResult(text);
+
     } catch (e) { console.error("Live OCR error:", e); }
     finally { isOcrRunning = false; }
 }
