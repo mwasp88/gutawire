@@ -3,6 +3,8 @@ import json
 import serial
 import cv2
 
+# Use the default video device. On Raspberry Pi this is usually `/dev/video0`
+
 SERIAL_PORT = "/dev/serial0"  # Raspberry Pi UART
 SERIAL_BAUD = 9600
 serial_conn = None
@@ -11,18 +13,24 @@ print(f"[INFO] Using serial port: {SERIAL_PORT} @ {SERIAL_BAUD} baud")
 
 app = Flask(__name__, static_folder=".")
 
-camera = cv2.VideoCapture(0)
-
 def gen_frames():
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-        else:
+    """Generator yielding camera frames as JPEG bytes."""
+    cam = cv2.VideoCapture(0)
+    if not cam.isOpened():
+        print("[ERROR] Camera not available")
+        return
+    try:
+        while True:
+            success, frame = cam.read()
+            if not success:
+                print("[ERROR] Failed to read frame")
+                break
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    finally:
+        cam.release()
 
 def get_serial_connection():
     global serial_conn

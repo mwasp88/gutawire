@@ -11,6 +11,9 @@ This folder contains a simple Flask application for a parking management system 
 - A webcam (USB or PiCamera configured as `/dev/video0`)
 - Optional: serial device connected to `/dev/serial0`
 
+If you see `[ERROR] Camera not available` in the logs, make sure a webcam is
+connected and accessible as `/dev/video0`.
+
 Install dependencies using the provided `requirements.txt` file:
 ```bash
 pip install -r requirements.txt
