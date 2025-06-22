@@ -78,6 +78,20 @@
         </div>
 
         <div id="message-box" class="mt-6 p-4 rounded-lg text-center text-white font-medium hidden"></div>
+
+        <div id="history-section" class="mt-8">
+            <h2 class="text-xl font-semibold mb-2">Event History</h2>
+            <table class="min-w-full text-sm" id="history-table">
+                <thead>
+                    <tr>
+                        <th class="px-2 py-1 text-left">Time</th>
+                        <th class="px-2 py-1">Plate</th>
+                        <th class="px-2 py-1">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
 <script>
@@ -107,6 +121,7 @@ const captureBtn = document.getElementById('capture-btn');
 const liveOverlay = document.getElementById('live-overlay');
 const parkingCountDisplay = document.getElementById('parking-count');
 const parkingDetailsDisplay = document.getElementById('parking-details');
+const historyTableBody = document.getElementById('history-table').querySelector('tbody');
 
 let selectedImageFile = null;
 let webcamStream = null;
@@ -182,6 +197,24 @@ function updateParkingCount() {
     }
 }
 
+async function fetchHistory() {
+    try {
+        const res = await fetch('/history');
+        if (!res.ok) return;
+        const data = await res.json();
+        historyTableBody.innerHTML = '';
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="px-2 py-1">${row.timestamp}</td>` +
+                          `<td class="px-2 py-1">${row.plate}</td>` +
+                          `<td class="px-2 py-1">${row.action}</td>`;
+            historyTableBody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error('History fetch error:', e);
+    }
+}
+
 function sendSerialData(plate, isEntering) {
     fetch('/serial_event', {
         method: 'POST',
@@ -192,7 +225,7 @@ function sendSerialData(plate, isEntering) {
             slots: MAX_PARKING_CAPACITY,
             used: carsInParking.size
         })
-    }).catch(err => console.error('Serial send error:', err));
+    }).then(fetchHistory).catch(err => console.error('Serial send error:', err));
 }
 
 function processOcrResult(text) {
@@ -228,6 +261,7 @@ function resetParkingState() {
     carsInParking.clear();
     updateParkingCount();
     resetUIState();
+    fetchHistory();
 }
 
 async function analyzeImage(imageSource, buttonElement) {
@@ -405,6 +439,7 @@ copyBtn.addEventListener('click', () => {
     document.body.removeChild(tempTextArea);
 });
 
+fetchHistory();
 switchToUploadMode();
 </script>
 </body>
