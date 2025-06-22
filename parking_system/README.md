@@ -12,6 +12,7 @@ This folder contains a simple Flask application for a parking management system 
 - Optional: serial device connected to `/dev/serial0`
 - SQLite3 (included with Python) for storing event history
 
+
 If you see `[ERROR] Camera not available` in the logs, make sure a webcam is
 connected and accessible as `/dev/video0`.
 
@@ -27,7 +28,5 @@ python app.py
 ```
 Then open `http://<raspberrypi-ip>:5000` in a browser on the same network.
 
-The page provides options for image upload, live scanning, and capturing frames for analysis. Plate data is sent to the serial port for integration with external hardware such as gates or indicators. Each entry or exit event is timestamped and shown in the plate details box and in the "Event History" table.
+The page provides options for image upload, live scanning, and capturing frames for analysis. Plate data is sent to the serial port for integration with external hardware such as gates or indicators. Each entry or exit event is timestamped and shown in the plate history table. All entry and exit events are saved in `history.db`. You can view the latest records at `/history` or in the "Event History" table on the web page.
 
-All entry and exit events are saved in `history.db`. You can view the latest
-records at `/history` or in the "Event History" table on the web page.

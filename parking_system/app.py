@@ -7,7 +7,6 @@ from datetime import datetime
 import os
 
 # Use the default video device. On Raspberry Pi this is usually `/dev/video0`
-
 SERIAL_PORT = "/dev/serial0"  # Raspberry Pi UART
 SERIAL_BAUD = 9600
 serial_conn = None
@@ -92,7 +91,6 @@ def serial_event():
         timestamp = record_event(plate, action_name)
 
     ser = get_serial_connection()
-
     if ser:
         try:
             json_data = json.dumps(data) + '\n'
