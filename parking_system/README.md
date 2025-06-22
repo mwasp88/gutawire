@@ -11,9 +11,9 @@ This folder contains a simple Flask application for a parking management system 
 - A webcam (USB or PiCamera configured as `/dev/video0`)
 - Optional: serial device connected to `/dev/serial0`
 
-Install dependencies:
+Install dependencies using the provided `requirements.txt` file:
 ```bash
-pip install flask opencv-python pyserial
+pip install -r requirements.txt
 ```
 
 ## Usage
