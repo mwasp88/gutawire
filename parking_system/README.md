@@ -12,8 +12,8 @@ This folder contains a simple Flask application for a parking management system 
 - Optional: serial device connected to `/dev/serial0`
 - SQLite3 (included with Python) for storing event history
 
-
-If you see `[ERROR] Camera not available` in the logs, make sure a webcam is
+If you see `[ERROR] Camera not available` or repeated `[ERROR] Failed to read frame`
+messages in the logs, ensure a webcam is connected and accessible as `/dev/video0`.
 connected and accessible as `/dev/video0`.
 
 Install dependencies using the provided `requirements.txt` file:

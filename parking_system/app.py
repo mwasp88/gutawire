@@ -5,6 +5,7 @@ import cv2
 import sqlite3
 from datetime import datetime
 import os
+import time
 
 # Use the default video device. On Raspberry Pi this is usually `/dev/video0`
 SERIAL_PORT = "/dev/serial0"  # Raspberry Pi UART
@@ -42,24 +43,37 @@ print(f"[INFO] Using serial port: {SERIAL_PORT} @ {SERIAL_BAUD} baud")
 
 app = Flask(__name__, static_folder=".")
 
+camera = None
+
+def get_camera():
+    """Return an opened camera object, attempting to reconnect if needed."""
+    global camera
+    if camera is None or not camera.isOpened():
+        camera = cv2.VideoCapture(0)
+        if not camera.isOpened():
+            camera = None
+    return camera
+
 def gen_frames():
     """Generator yielding camera frames as JPEG bytes."""
-    cam = cv2.VideoCapture(0)
-    if not cam.isOpened():
-        print("[ERROR] Camera not available")
-        return
-    try:
-        while True:
-            success, frame = cam.read()
-            if not success:
-                print("[ERROR] Failed to read frame")
-                break
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    finally:
-        cam.release()
+    global camera
+    while True:
+        cam = get_camera()
+        if cam is None:
+            print("[ERROR] Camera not available")
+            time.sleep(1)
+            continue
+        success, frame = cam.read()
+        if not success:
+            print("[ERROR] Failed to read frame")
+            cam.release()
+            camera = None
+            time.sleep(1)
+            continue
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame_bytes = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
 def get_serial_connection():
     global serial_conn
